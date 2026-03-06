@@ -44,6 +44,23 @@ If the exporter is configured to run all collectors (default on OpenWrt when no 
   ```
 - **Alert idea**: Alert when a given peer’s last handshake is older than a threshold (e.g. 10 minutes) to detect stale or disconnected tunnels.
 
+## Example alert rule
+
+Alert when a WireGuard/Amnezia WG peer has not had a successful handshake in more than 10 minutes (only for peers that have handshaken at least once, to avoid alerting on newly added peers):
+
+```yaml
+- alert: WireGuardPeerStaleHandshake
+  expr: (time() - wg_latest_handshake_seconds) > 600 and wg_latest_handshake_seconds > 0
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "WireGuard peer handshake is stale"
+    description: "Peer {{ $labels.device }} ({{ $labels.public_key }}) has not had a handshake in more than 10 minutes."
+```
+
+For Prometheus Operator, see the [prometheus-rule-wireguard.yaml](prometheus-rule-wireguard.yaml) example.
+
 ## References
 
 - [OpenWrt prometheus-collectors](https://github.com/openwrt/packages/tree/openwrt-22.03/utils/prometheus-node-exporter-lua/files/usr/lib/lua/prometheus-collectors) – other collector examples

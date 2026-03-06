@@ -1,0 +1,23 @@
+# Example PrometheusRule for WireGuard / Amnezia WG handshake alerts.
+# Use with Prometheus Operator (monitoring.coreos.com/v1).
+# Adjust namespace and labels to match your cluster.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: wireguard-handshake
+  labels:
+    prometheus: kube-prometheus  # adjust to your Prometheus selector
+    role: alert-rules
+spec:
+  groups:
+    - name: wireguard
+      rules:
+        - alert: WireGuardPeerStaleHandshake
+          expr: (time() - wg_latest_handshake_seconds) > 600 and wg_latest_handshake_seconds > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "WireGuard peer handshake is stale"
+            description: "Peer {{ $labels.device }} ({{ $labels.public_key }}) has not had a handshake in more than 10 minutes."
