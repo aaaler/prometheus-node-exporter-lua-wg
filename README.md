@@ -9,6 +9,15 @@ This collector adds a single Prometheus metric, `wg_latest_handshake_seconds`, f
 
 ## Installation
 
+**Using the opkg package (recommended on OpenWrt):**
+```
+opkg install https://github.com/aaaler/prometheus-node-exporter-lua-wg/releases/download/0.1.0/prometheus-node-exporter-lua-wireguard_0.1.0_all.ipk
+```
+ 
+ [Building the opkg package](#building-the-opkg-package)
+
+**Manual install:**
+
 1. Copy `wireguard.lua` to the collectors directory on the device:
    ```bash
    scp wireguard.lua root@<device>:/usr/lib/lua/prometheus-collectors/
@@ -60,6 +69,42 @@ Alert when a WireGuard/Amnezia WG peer has not had a successful handshake in mor
 ```
 
 For Prometheus Operator, see the [prometheus-rule-wireguard.yaml](prometheus-rule-wireguard.yaml) example.
+
+## Building the opkg package
+
+You can install the collector via an OpenWrt package (`.ipk`) in two ways: build the package with the OpenWrt SDK, or build it manually with the provided script. No CI/CD is required; both are intended for manual use.
+
+### Option 1: Manual ipk build (no SDK)
+
+On any Linux host with GNU `tar` and `gzip` (e.g. Ubuntu/WSL):
+
+```bash
+./build-ipk.sh        # builds prometheus-node-exporter-lua-wireguard_1.0.0_all.ipk
+./build-ipk.sh 1.0.1  # builds with version 1.0.1
+```
+
+Then copy the `.ipk` to the OpenWrt device and install:
+
+```bash
+scp prometheus-node-exporter-lua-wireguard_1.0.0_all.ipk root@<device>:/tmp/
+ssh root@<device> "opkg install /tmp/prometheus-node-exporter-lua-wireguard_1.0.0_all.ipk"
+```
+
+The package depends on `prometheus-node-exporter-lua`; install it first if needed (`opkg install prometheus-node-exporter-lua`).
+
+### Option 2: OpenWrt SDK
+
+1. Clone or copy this repository into your OpenWrt SDK environment (e.g. as a custom feed or a single package under `package/`).
+2. From the SDK root, ensure the package path is visible (e.g. `package/feeds/packages/prometheus-node-exporter-lua-wireguard` or a symlink).
+3. Build the package:
+
+   ```bash
+   make package/prometheus-node-exporter-lua-wireguard/compile V=s
+   ```
+
+4. The `.ipk` will be in `bin/packages/<arch>/<feed>/` (e.g. `bin/packages/mipsel_24kc/packages/`). Copy it to the device and install with `opkg install ...`.
+
+The [Makefile](Makefile) installs `wireguard.lua` from the repo root into `/usr/lib/lua/prometheus-collectors/` and declares a dependency on `prometheus-node-exporter-lua`.
 
 ## References
 
